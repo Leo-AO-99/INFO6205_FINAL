@@ -42,8 +42,18 @@ public class MCTS {
             // backpropagate
             backPropagate(curNode, reward);
         }
-        // TODO choose the best child
-        return node;
+
+        // get the best child
+        Node<TicTacToe> bestChild = null;
+        int maxPlayouts = -1;
+        for (Node<TicTacToe> child : node.children()) {
+            if (child.playouts() > maxPlayouts) {
+                maxPlayouts = child.playouts();
+                bestChild = child;
+            }
+        }
+
+        return bestChild != null ? bestChild : node;
     }
 
     static int simulate(Node<TicTacToe> node) {
@@ -65,7 +75,14 @@ public class MCTS {
     }
 
     static void backPropagate(Node<TicTacToe> node, int reward) {
-        // TODO backpropagate the reward
+        while (node != null) {
+            if (node instanceof TicTacToeNode ticNode) {
+                ticNode.incrementPlayouts();
+                ticNode.addWins(reward);
+                node = ticNode.getParent();
+            } else
+                break;
+        }
     }
 
     static Node<TicTacToe> select_and_expand(Node<TicTacToe> node) {

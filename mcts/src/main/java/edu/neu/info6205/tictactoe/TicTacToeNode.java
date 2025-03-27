@@ -15,6 +15,18 @@ import edu.neu.info6205.core.State;
 
 public class TicTacToeNode implements Node<TicTacToe> {
 
+    public TicTacToeNode getParent() {
+        return parent;
+    }
+
+    public void incrementPlayouts() {
+        playouts++;
+    }
+
+    public void addWins(int reward) {
+        wins += reward;
+    }
+
     /**
      * @return true if this node is a leaf node (in which case no further
      *         exploration is possible).
@@ -60,7 +72,7 @@ public class TicTacToeNode implements Node<TicTacToe> {
      */
     @Override
     public void addChild(State<TicTacToe> state) {
-        children.add(new TicTacToeNode(state));
+        children.add(new TicTacToeNode(state, this));
     }
 
     /**
@@ -111,9 +123,14 @@ public class TicTacToeNode implements Node<TicTacToe> {
     }
 
     public TicTacToeNode(State<TicTacToe> state) {
+        this(state, null);
+    }
+
+    public TicTacToeNode(State<TicTacToe> state, TicTacToeNode parent) {
         this.state = state;
+        this.parent = parent;
         this.possibleMoves = state.moveIterator(state.player());
-        children = new ArrayList<>();
+        this.children = new ArrayList<>();
         initializeNodeData();
     }
 
@@ -133,6 +150,7 @@ public class TicTacToeNode implements Node<TicTacToe> {
 
     private int wins;
     private int playouts;
+    private TicTacToeNode parent;
 
     private final Iterator<Move<TicTacToe>> possibleMoves;
 }
