@@ -82,6 +82,10 @@ public interface Node<G extends Game> {
      */
     int playouts();
 
+    boolean isExpandable();
+
+    Node<G> expand();
+
     private void addChildren(final State<G> state) {
         for (Iterator<Move<G>> it = state.moveIterator(state.player()); it.hasNext();)
             addChild(state.next(it.next()));

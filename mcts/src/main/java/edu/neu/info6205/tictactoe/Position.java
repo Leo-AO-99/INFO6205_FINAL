@@ -23,12 +23,12 @@ public class Position {
      * @return a Position.
      */
     static Position parsePosition(final String grid, final int last) {
-        int[][] matrix = new int[gridSize][gridSize];
+        int[][] matrix = new int[GRID_SIZE][GRID_SIZE];
         int count = 0;
-        String[] rows = grid.split("\\n", gridSize);
-        for (int i = 0; i < gridSize; i++) {
-            String[] cells = rows[i].split(" ", gridSize);
-            for (int j = 0; j < gridSize; j++) {
+        String[] rows = grid.split("\\n", GRID_SIZE);
+        for (int i = 0; i < GRID_SIZE; i++) {
+            String[] cells = rows[i].split(" ", GRID_SIZE);
+            for (int j = 0; j < GRID_SIZE; j++) {
                 int cell = parseCell(cells[j].trim());
                 if (cell >= 0)
                     count++;
@@ -68,7 +68,8 @@ public class Position {
         int[][] matrix = copyGrid();
         if (matrix[x][y] < 0) {
             // TO BE IMPLEMENTED
-            return null;
+            matrix[x][y] = player;
+            return new Position(matrix, count + 1, player);
             // END SOLUTION
         }
         throw new RuntimeException("Position is occupied: " + x + ", " + y);
@@ -83,11 +84,11 @@ public class Position {
         if (player == last)
             throw new RuntimeException("consecutive moves by same player: " + player);
         List<int[]> result = new ArrayList<>();
-        for (int i = 0; i < gridSize; i++)
-            for (int j = 0; j < gridSize; j++)
+        for (int i = 0; i < GRID_SIZE; i++)
+            for (int j = 0; j < GRID_SIZE; j++)
                 if (grid[i][j] < 0)
                     // TO BE IMPLEMENTED
-                    ;
+                    result.add(new int[]{i,j});
         // END SOLUTION
         return result;
     }
@@ -104,11 +105,11 @@ public class Position {
         int[][] matrix = copyGrid();
         switch (axis) {
             case 0 -> {
-                for (int j = 0; j < gridSize; j++)
+                for (int j = 0; j < GRID_SIZE; j++)
                     swap(matrix, 0, j, 2, j); // middle row
             }
             case 1 -> {
-                for (int i = 0; i < gridSize; i++)
+                for (int i = 0; i < GRID_SIZE; i++)
                     swap(matrix, i, 0, i, 2); // middle column
             }
             default -> throw new RuntimeException("reflect not implemented for " + axis);
@@ -123,10 +124,10 @@ public class Position {
      * @return a new Position which is rotated from this.
      */
     public Position rotate() {
-        int[][] matrix = new int[gridSize][gridSize];
-        for (int i = 0; i < gridSize; i++)
-            for (int j = 0; j < gridSize; j++)
-                matrix[i][j] = grid[j][gridSize - i - 1];
+        int[][] matrix = new int[GRID_SIZE][GRID_SIZE];
+        for (int i = 0; i < GRID_SIZE; i++)
+            for (int j = 0; j < GRID_SIZE; j++)
+                matrix[i][j] = grid[j][GRID_SIZE - i - 1];
         return new Position(matrix, count, last);
     }
 
@@ -154,8 +155,21 @@ public class Position {
      */
     boolean threeInARow() {
         // TO BE IMPLEMENTED
-        return false;
+        for (int i = 0; i < GRID_SIZE; i++) {
+            if (threeInALine(projectRow(i)) || threeInALine(projectCol(i))) {
+                return true;
+            }
+        }
+        return threeInALine(projectDiag(true)) || threeInALine(projectDiag(false));
         // END SOLUTION
+    }
+
+    private boolean threeInALine(int[] line) {
+        int type = line[0];
+        if (type != last) {
+            return false;
+        }
+        return line[1] == type && line[2] == type;
     }
 
     /**
@@ -175,8 +189,8 @@ public class Position {
      * @return an array of three ints.
      */
     int[] projectCol(int j) {
-        int[] result = new int[gridSize];
-        for (int i = 0; i < gridSize; i++)
+        int[] result = new int[GRID_SIZE];
+        for (int i = 0; i < GRID_SIZE; i++)
             result[i] = grid[i][j];
         return result;
     }
@@ -188,9 +202,9 @@ public class Position {
      * @return an int[3].
      */
     int[] projectDiag(boolean b) {
-        int[] result = new int[gridSize];
-        for (int j = 0; j < gridSize; j++) {
-            int i = b ? j : gridSize - j - 1;
+        int[] result = new int[GRID_SIZE];
+        for (int j = 0; j < GRID_SIZE; j++) {
+            int i = b ? j : GRID_SIZE - j - 1;
             result[j] = grid[i][j];
         }
         return result;
@@ -210,13 +224,13 @@ public class Position {
      */
     public String render() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < gridSize; i++) {
-            for (int j = 0; j < gridSize; j++) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
                 sb.append(render(grid[i][j]));
-                if (j < gridSize - 1)
+                if (j < GRID_SIZE - 1)
                     sb.append(' ');
             }
-            if (i < gridSize - 1)
+            if (i < GRID_SIZE - 1)
                 sb.append('\n');
         }
         return sb.toString();
@@ -225,13 +239,13 @@ public class Position {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < gridSize; i++) {
-            for (int j = 0; j < gridSize; j++) {
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
                 sb.append(grid[i][j]);
-                if (j < gridSize - 1)
+                if (j < GRID_SIZE - 1)
                     sb.append(',');
             }
-            if (i < gridSize - 1)
+            if (i < GRID_SIZE - 1)
                 sb.append('\n');
         }
         return sb.toString();
@@ -259,9 +273,9 @@ public class Position {
     }
 
     private int[][] copyGrid() {
-        int[][] result = new int[gridSize][gridSize];
-        for (int i = 0; i < gridSize; i++)
-            result[i] = Arrays.copyOf(grid[i], gridSize);
+        int[][] result = new int[GRID_SIZE][GRID_SIZE];
+        for (int i = 0; i < GRID_SIZE; i++)
+            result[i] = Arrays.copyOf(grid[i], GRID_SIZE);
         return result;
     }
 
@@ -291,6 +305,6 @@ public class Position {
     private final int[][] grid;
     final int last;
     private final int count;
-    private final static int gridSize = 3;
+    private final static int GRID_SIZE = 3;
     private final int[] xxx;
 }
