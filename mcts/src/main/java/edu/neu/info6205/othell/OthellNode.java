@@ -8,6 +8,18 @@ import edu.neu.info6205.core.State;
 
 public class OthellNode implements Node<Othell> {
 
+    public OthellNode getParent() {
+        return parent;
+    }
+
+    public void incrementPlayouts() {
+        playouts++;
+    }
+
+    public void addWins(int reward) {
+        wins += reward;
+    }
+
     @Override
     public boolean isLeaf() {
         return state.isTerminal();
@@ -25,8 +37,7 @@ public class OthellNode implements Node<Othell> {
 
     @Override
     public Collection<Node<Othell>> children() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'children'");
+        return children;
     }
 
     @Override
@@ -37,8 +48,7 @@ public class OthellNode implements Node<Othell> {
 
     @Override
     public void addChild(State<Othell> state) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'addChild'");
+        children.add(new OthellNode(state, this));
     }
 
     @Override
@@ -53,8 +63,13 @@ public class OthellNode implements Node<Othell> {
     
 
     public OthellNode(State<Othell> state) {
+        this(state, null);
+    }
+
+    public OthellNode(State<Othell> state, OthellNode parent) {
         this.state = state;
         this.children = new ArrayList<>();
+        this.parent = parent;
     }
 
     private final State<Othell> state;
@@ -62,4 +77,5 @@ public class OthellNode implements Node<Othell> {
 
     private int wins;
     private int playouts;
+    private OthellNode parent;
 }
