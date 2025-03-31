@@ -6,10 +6,8 @@ package edu.neu.info6205.tictactoe;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Optional;
 
-import edu.neu.info6205.core.Move;
 import edu.neu.info6205.core.Node;
 import edu.neu.info6205.core.State;
 
@@ -107,21 +105,6 @@ public class TicTacToeNode implements Node<TicTacToe> {
         return playouts;
     }
 
-    @Override
-    public boolean isExpandable() {
-        return possibleMoves.hasNext();
-    }
-
-    @Override
-    public Node<TicTacToe> expand() {
-        if (!isExpandable()) {
-            throw new RuntimeException("Node is not expandable");
-        }
-        Move<TicTacToe> move = possibleMoves.next();
-        addChild(state.next(move));
-        return children.get(children.size() - 1);
-    }
-
     public TicTacToeNode(State<TicTacToe> state) {
         this(state, null);
     }
@@ -129,9 +112,8 @@ public class TicTacToeNode implements Node<TicTacToe> {
     public TicTacToeNode(State<TicTacToe> state, TicTacToeNode parent) {
         this.state = state;
         this.parent = parent;
-        this.possibleMoves = state.moveIterator(state.player());
         this.children = new ArrayList<>();
-        initializeNodeData();
+        // initializeNodeData();
     }
 
     private void initializeNodeData() {
@@ -151,6 +133,4 @@ public class TicTacToeNode implements Node<TicTacToe> {
     private int wins;
     private int playouts;
     private TicTacToeNode parent;
-
-    private final Iterator<Move<TicTacToe>> possibleMoves;
 }

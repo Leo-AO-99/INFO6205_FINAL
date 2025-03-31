@@ -50,18 +50,6 @@ public class OthellNode implements Node<Othell> {
     public int playouts() {
         return playouts;
     }
-
-    @Override
-    public boolean isExpandable() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isExpandable'");
-    }
-
-    @Override
-    public Node<Othell> expand() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'expand'");
-    }
     
 
     public OthellNode(State<Othell> state) {
