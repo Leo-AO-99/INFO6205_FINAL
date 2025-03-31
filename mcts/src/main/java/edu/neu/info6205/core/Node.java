@@ -82,9 +82,14 @@ public interface Node<G extends Game> {
      */
     int playouts();
 
-    boolean isExpandable();
-
-    Node<G> expand();
+    default void expandAll() {
+        if (isLeaf())
+            return;
+        if (children().isEmpty()) {
+            addChildren(state());
+        } else
+            throw new RuntimeException("expand all done already for " + this);
+    }
 
     private void addChildren(final State<G> state) {
         for (Iterator<Move<G>> it = state.moveIterator(state.player()); it.hasNext();)

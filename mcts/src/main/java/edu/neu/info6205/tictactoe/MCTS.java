@@ -6,6 +6,7 @@ package edu.neu.info6205.tictactoe;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Optional;
 
 import edu.neu.info6205.core.Move;
@@ -17,10 +18,15 @@ import edu.neu.info6205.core.State;
  */
 public class MCTS {
 
-    private static final int SIMULATION_COUNT = 12;
+    private static final int SIMULATION_COUNT = 5000;
+    static double C = 1.414;
+
 
     public static void main(String[] args) {
-        long seed = 1742849870735L;
+        // long seed = 1743396199967L;
+        long seed = System.currentTimeMillis();
+        
+        System.out.println("Seed: " + seed);
         MCTS mcts = new MCTS(new TicTacToeNode(new TicTacToe(seed).new TicTacToeState()));
         Node<TicTacToe> root = mcts.root;
 
@@ -28,50 +34,58 @@ public class MCTS {
             root = nextNode(root);
             System.out.println(showBoard(root.state()));
         }
-        // This is where you process the MCTS to try to win the game.
+        System.out.println("Game over");
+        System.exit(0);
     }
 
     static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
         for (int i = 0; i < SIMULATION_COUNT; i++) {
-            // select and expand
-            Node<TicTacToe> curNode = select_and_expand(node);
-            System.out.println(curNode.state().player());
-            System.out.println(showBoard(curNode.state()));
+            // select
+            Node<TicTacToe> curNode = select(node);
+            // expand
+            curNode = expand(curNode);
             // simulate
             int reward = simulate(curNode);
             // backpropagate
             backPropagate(curNode, reward);
         }
 
-        // get the best child
-        Node<TicTacToe> bestChild = null;
-        int maxPlayouts = -1;
-        for (Node<TicTacToe> child : node.children()) {
-            if (child.playouts() > maxPlayouts) {
-                maxPlayouts = child.playouts();
-                bestChild = child;
-            }
-        }
+        // Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.wins() / c.playouts()));
+        Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.playouts()));
 
-        return bestChild != null ? bestChild : node;
+        // return bestChild;
+        return new TicTacToeNode(bestChild.state());
     }
 
     static int simulate(Node<TicTacToe> node) {
-        State<TicTacToe> simState = node.state();
+        
+        boolean invert = true;
+        State<TicTacToe> simState = node.state();  
         int currentPlayer = simState.player();
-
         while (!simState.isTerminal()) {
             Move<TicTacToe> move = simState.chooseMove(simState.player());
             simState = simState.next(move);
+            invert = !invert;
         }
 
         Optional<Integer> winner = simState.winner();
-        if (winner.isEmpty())
+        int reward = 2;
+        if (winner.isEmpty()) {
             return 1;
-        else if (winner.get() == currentPlayer)
-            return 2;
-        else
-            return 0;
+        } else {
+            // do same thing as invert
+            if (winner.get() == currentPlayer) {
+                return 2 - reward;
+            } else {
+                return reward;
+            }
+
+            // if (invert) {
+            //     return reward;
+            // } else {
+            //     return 2 - reward;
+            // }
+        }
     }
 
     static void backPropagate(Node<TicTacToe> node, int reward) {
@@ -79,18 +93,23 @@ public class MCTS {
             if (node instanceof TicTacToeNode ticNode) {
                 ticNode.incrementPlayouts();
                 ticNode.addWins(reward);
+                reward = 2 - reward;
                 node = ticNode.getParent();
-            } else
-                break;
+            } else {
+                throw new RuntimeException("Node is not a TicTacToeNode");
+            }
         }
     }
 
-    static Node<TicTacToe> select_and_expand(Node<TicTacToe> node) {
-        // TODO it seems that whether expand all children or just one is not important,
-        // because when choosing the best UCT child, playout = 0 is the first choice
+    static Node<TicTacToe> select(Node<TicTacToe> node) {
         while (!node.isLeaf()) {
-            if (node.isExpandable()) {
-                return expand(node);
+            if (node.children().isEmpty()) {
+                return node;
+            }
+            for (Node<TicTacToe> child : node.children()) {
+                if (child.playouts() == 0) {
+                    return child;
+                }
             }
             node = BestUCTNode(node);
         }
@@ -98,38 +117,19 @@ public class MCTS {
     }
 
     static Node<TicTacToe> expand(Node<TicTacToe> node) {
-        if (!node.isExpandable()) {
-            throw new RuntimeException("Node is not expandable");
+        if (node.isLeaf()) {
+            return node;
         }
-        return node.expand();
+        if (node.children().isEmpty()) {
+            node.expandAll();
+        }
+        ArrayList<Node<TicTacToe>> children = new ArrayList<>(node.children());
+        return children.get(node.state().random().nextInt(children.size()));
     }
 
     static Node<TicTacToe> BestUCTNode(Node<TicTacToe> node) {
         int parentPlayouts = node.playouts();
-
-        double bestUCT = -1;
-        // Random choose a child with the best UCT
-        ArrayList<Node<TicTacToe>> children = new ArrayList<>(node.children());
-        Collections.shuffle(children, node.state().random());
-        ArrayList<Node<TicTacToe>> bestChildren = new ArrayList<>();
-        for (Node<TicTacToe> child : children) {
-            // make sure we will simulate all children
-            int childPlayouts = child.playouts();
-            if (childPlayouts == 0) {
-                return child;
-            }
-            double curUCT = (double) child.wins() / childPlayouts
-                    + Math.sqrt(2) * Math.sqrt(Math.log(parentPlayouts) / childPlayouts);
-            if (curUCT > bestUCT) {
-                bestUCT = curUCT;
-                bestChildren.clear();
-                bestChildren.add(child);
-            } else if (curUCT == bestUCT) {
-                bestChildren.add(child);
-            }
-        }
-
-        return bestChildren.get(node.state().random().nextInt(bestChildren.size()));
+        return Collections.max(node.children(), Comparator.comparing(n -> ((double) n.wins()) / n.playouts() + C * Math.sqrt(Math.log(parentPlayouts) / n.playouts())));
     }
 
     public MCTS(Node<TicTacToe> root) {
