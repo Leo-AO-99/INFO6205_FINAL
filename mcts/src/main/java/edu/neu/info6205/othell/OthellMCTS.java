@@ -22,7 +22,7 @@ public class OthellMCTS {
 
         while (!root.state().isTerminal()) {
             root = nextNode(root);
-            System.out.println(((Othell.OthellState) root.state()).showBoard());
+            System.out.println(othellShowBoard(((Othell.OthellState) root.state()).showBoard()));
         }
 
         Optional<Integer> winner = root.state().winner();
@@ -85,11 +85,15 @@ public class OthellMCTS {
     }
 
     static void backPropagate(Node<Othell> node, int reward) {
+        boolean rewardForWhite = node.white();
         while (node != null) {
             if (node instanceof OthellNode oNode) {
                 oNode.incrementPlayouts();
-                oNode.addWins(reward);
-                reward = 2 - reward;
+                if (node.white() == rewardForWhite) {
+                    oNode.addWins(reward);
+                } else {
+                    oNode.addWins(2 - reward);
+                }
                 node = oNode.getParent();
             } else {
                 throw new RuntimeException("Node is not OthellNode");
@@ -101,5 +105,14 @@ public class OthellMCTS {
         int parentPlayouts = node.playouts();
         return Collections.max(node.children(), Comparator.comparing(
                 n -> ((double) n.wins()) / n.playouts() + C * Math.sqrt(Math.log(parentPlayouts) / n.playouts())));
+    }
+
+    public static String othellShowBoard(String state) {
+        String board = state;
+        board = board.replace("0", "_");
+        board = board.replace("1", "●");
+        board = board.replace("2", "○");
+
+        return board;
     }
 }
