@@ -178,7 +178,7 @@ public class OthelloGUI extends JFrame {
     private void drawBoard(Graphics g) {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
-                g.setColor(Color.GREEN);
+                g.setColor(Color.GRAY);
                 g.fillRect(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 g.setColor(Color.BLACK);
                 g.drawRect(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE);

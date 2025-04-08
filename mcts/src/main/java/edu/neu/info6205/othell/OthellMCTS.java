@@ -11,8 +11,18 @@ import edu.neu.info6205.core.State;
 
 public class OthellMCTS {
 
-    private static final int SIMULATION_COUNT = 1000;
+    private static final int SIMULATION_COUNT = 10000;
     private static final double C = 1.414;
+    private static final int[][] POSITION_WEIGHTS = {
+            { 100, -25, 10, 5, 5, 10, -25, 100 },
+            { -25, -50, -2, -2, -2, -2, -50, -25 },
+            { 10, -2, 5, 1, 1, 5, -2, 10 },
+            { 5, -2, 1, 0, 0, 1, -2, 5 },
+            { 5, -2, 1, 0, 0, 1, -2, 5 },
+            { 10, -2, 5, 1, 1, 5, -2, 10 },
+            { -25, -50, -2, -2, -2, -2, -50, -25 },
+            { 100, -25, 10, 5, 5, 10, -25, 100 }
+    };
 
     public static void main(String[] args) {
         long seed = System.currentTimeMillis();
@@ -62,11 +72,30 @@ public class OthellMCTS {
     static Node<Othell> expand(Node<Othell> node) {
         if (node.isLeaf())
             return node;
+
         if (node.children().isEmpty()) {
-            node.expandAll();
+            State<Othell> state = node.state();
+            ArrayList<Move<Othell>> moves = new ArrayList<>(state.moves(state.player()));
+
+            moves.sort((a, b) -> {
+                OthellMove moveA = (OthellMove) a;
+                OthellMove moveB = (OthellMove) b;
+                return Integer.compare(
+                        getMoveScore(moveB.move()),
+                        getMoveScore(moveA.move()));
+            });
+
+            for (Move<Othell> move : moves) {
+                State<Othell> childState = state.next(move);
+                node.addChild(childState);
+            }
         }
-        ArrayList<Node<Othell>> children = new ArrayList<>(node.children());
-        return children.get(node.state().random().nextInt(children.size()));
+
+        return node.children().iterator().next();
+    }
+
+    private static int getMoveScore(NextStep step) {
+        return POSITION_WEIGHTS[step.x][step.y];
     }
 
     static int simulate(Node<Othell> node) {
