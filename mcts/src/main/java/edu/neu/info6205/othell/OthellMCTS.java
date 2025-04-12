@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.PriorityQueue;
 
 import edu.neu.info6205.core.Move;
 import edu.neu.info6205.core.Node;
@@ -13,6 +14,16 @@ public class OthellMCTS {
 
     private static final int SIMULATION_COUNT = 1000;
     private static final double C = 1.414;
+    private static final int[][] POSITION_WEIGHTS = {
+            { 100, -25, 10, 5, 5, 10, -25, 100 },
+            { -25, -50, -2, -2, -2, -2, -50, -25 },
+            { 10, -2, 5, 1, 1, 5, -2, 10 },
+            { 5, -2, 1, 0, 0, 1, -2, 5 },
+            { 5, -2, 1, 0, 0, 1, -2, 5 },
+            { 10, -2, 5, 1, 1, 5, -2, 10 },
+            { -25, -50, -2, -2, -2, -2, -50, -25 },
+            { 100, -25, 10, 5, 5, 10, -25, 100 }
+    };
 
     public static void main(String[] args) {
         long seed = System.currentTimeMillis();
@@ -69,13 +80,36 @@ public class OthellMCTS {
         return children.get(node.state().random().nextInt(children.size()));
     }
 
+    private static int getMoveScore(NextStep step) {
+        return POSITION_WEIGHTS[step.x][step.y];
+    }
+
     static int simulate(Node<Othell> node) {
         State<Othell> state = node.state();
         int currentPlayer = state.player();
 
         while (!state.isTerminal()) {
-            Move<Othell> move = state.chooseMove(state.player());
-            state = state.next(move);
+            ArrayList<Move<Othell>> moves = new ArrayList<>(state.moves(state.player()));
+            if (moves.isEmpty())
+                break;
+
+            int topK = Math.min(3, moves.size());
+
+            PriorityQueue<Move<Othell>> heap = new PriorityQueue<>(topK, Comparator.comparingInt(a -> {
+                OthellMove move = (OthellMove) a;
+                return getMoveScore(move.move());
+            }));
+
+            for (Move<Othell> move : moves) {
+                heap.offer(move);
+                if (heap.size() > topK) {
+                    heap.poll();
+                }
+            }
+
+            ArrayList<Move<Othell>> topMoves = new ArrayList<>(heap);
+            Move<Othell> selected = topMoves.get(state.random().nextInt(topMoves.size()));
+            state = state.next(selected);
         }
 
         Optional<Integer> winner = state.winner();
