@@ -74,7 +74,7 @@ public interface Node<G extends Game> {
      * @return the score for this Node and its descendents a win is worth 2 points,
      *         a draw is worth 1 point.
      */
-    int wins();
+    double wins();
 
     /**
      * @return the number of playouts evaluated (including this node). A leaf node

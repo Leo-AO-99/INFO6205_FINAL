@@ -1,4 +1,4 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,58 +9,50 @@ import java.util.PriorityQueue;
 import edu.neu.info6205.core.Move;
 import edu.neu.info6205.core.Node;
 import edu.neu.info6205.core.State;
+import static edu.neu.info6205.othello.Othello.POSITION_WEIGHTS;
 
-public class OthellMCTS {
+public class OthelloMCTS {
 
     private static final int SIMULATION_COUNT = 10000;
     private static final double C = 1.414;
-    private static final int[][] POSITION_WEIGHTS = {
-            { 100, -25, 10, 5, 5, 10, -25, 100 },
-            { -25, -50, -2, -2, -2, -2, -50, -25 },
-            { 10, -2, 5, 1, 1, 5, -2, 10 },
-            { 5, -2, 1, 0, 0, 1, -2, 5 },
-            { 5, -2, 1, 0, 0, 1, -2, 5 },
-            { 10, -2, 5, 1, 1, 5, -2, 10 },
-            { -25, -50, -2, -2, -2, -2, -50, -25 },
-            { 100, -25, 10, 5, 5, 10, -25, 100 }
-    };
+
 
     public static void main(String[] args) {
         long seed = System.currentTimeMillis();
         System.out.println("Seed: " + seed);
-        Othell game = new Othell(seed);
-        Node<Othell> root = new OthellNode(game.start());
+        Othello game = new Othello(seed);
+        Node<Othello> root = new OthelloNode(game.start());
 
         while (!root.state().isTerminal()) {
             root = nextNode(root);
-            System.out.println(othellShowBoard(((Othell.OthellState) root.state()).showBoard()));
+            System.out.println(othellShowBoard(((Othello.OthelloState) root.state()).showBoard()));
         }
 
         Optional<Integer> winner = root.state().winner();
         if (winner.isPresent()) {
-            System.out.println("Game over. Winner: " + (winner.get() == Othell.BLACK ? "Black" : "White"));
+            System.out.println("Game over. Winner: " + (winner.get() == Othello.BLACK ? "Black" : "White"));
         } else {
             System.out.println("Game over. Draw!");
         }
     }
 
-    static Node<Othell> nextNode(Node<Othell> node) {
+    static Node<Othello> nextNode(Node<Othello> node) {
         for (int i = 0; i < SIMULATION_COUNT; i++) {
-            Node<Othell> current = select(node);
+            Node<Othello> current = select(node);
             current = expand(current);
-            int reward = simulate(current);
+            double reward = simulate(current);
             backPropagate(current, reward);
         }
 
         return Collections.max(node.children(), Comparator.comparing(Node::playouts));
     }
 
-    static Node<Othell> select(Node<Othell> node) {
+    static Node<Othello> select(Node<Othello> node) {
         while (!node.isLeaf()) {
             if (node.children().isEmpty()) {
                 return node;
             }
-            for (Node<Othell> child : node.children()) {
+            for (Node<Othello> child : node.children()) {
                 if (child.playouts() == 0) {
                     return child;
                 }
@@ -70,24 +62,24 @@ public class OthellMCTS {
         return node;
     }
 
-    static Node<Othell> expand(Node<Othell> node) {
+    static Node<Othello> expand(Node<Othello> node) {
         if (node.isLeaf())
             return node;
 
         if (node.children().isEmpty()) {
-            State<Othell> state = node.state();
-            ArrayList<Move<Othell>> moves = new ArrayList<>(state.moves(state.player()));
+            State<Othello> state = node.state();
+            ArrayList<Move<Othello>> moves = new ArrayList<>(state.moves(state.player()));
 
             moves.sort((a, b) -> {
-                OthellMove moveA = (OthellMove) a;
-                OthellMove moveB = (OthellMove) b;
+                OthelloMove moveA = (OthelloMove) a;
+                OthelloMove moveB = (OthelloMove) b;
                 return Integer.compare(
                         getMoveScore(moveB.move()),
                         getMoveScore(moveA.move()));
             });
 
-            for (Move<Othell> move : moves) {
-                State<Othell> childState = state.next(move);
+            for (Move<Othello> move : moves) {
+                State<Othello> childState = state.next(move);
                 node.addChild(childState);
             }
         }
@@ -99,53 +91,49 @@ public class OthellMCTS {
         return POSITION_WEIGHTS[step.x][step.y];
     }
 
-    private static int getMoveScore(NextStep step) {
-        return POSITION_WEIGHTS[step.x][step.y];
-    }
-
-    static int simulate(Node<Othell> node) {
-        State<Othell> state = node.state();
+    static double simulate(Node<Othello> node) {
+        State<Othello> state = node.state();
         int currentPlayer = state.player();
 
         while (!state.isTerminal()) {
-            ArrayList<Move<Othell>> moves = new ArrayList<>(state.moves(state.player()));
+            ArrayList<Move<Othello>> moves = new ArrayList<>(state.moves(state.player()));
             if (moves.isEmpty())
                 break;
 
             int topK = Math.min(3, moves.size());
 
-            PriorityQueue<Move<Othell>> heap = new PriorityQueue<>(topK, Comparator.comparingInt(a -> {
-                OthellMove move = (OthellMove) a;
+            PriorityQueue<Move<Othello>> heap = new PriorityQueue<>(topK, Comparator.comparingInt(a -> {
+                OthelloMove move = (OthelloMove) a;
                 return getMoveScore(move.move());
             }));
 
-            for (Move<Othell> move : moves) {
+            for (Move<Othello> move : moves) {
                 heap.offer(move);
                 if (heap.size() > topK) {
                     heap.poll();
                 }
             }
 
-            ArrayList<Move<Othell>> topMoves = new ArrayList<>(heap);
-            Move<Othell> selected = topMoves.get(state.random().nextInt(topMoves.size()));
+            ArrayList<Move<Othello>> topMoves = new ArrayList<>(heap);
+            Move<Othello> selected = topMoves.get(state.random().nextInt(topMoves.size()));
             state = state.next(selected);
         }
 
         Optional<Integer> winner = state.winner();
         if (winner.isEmpty())
-            return 1;
-        return winner.get() == currentPlayer ? 2 : 0;
+            return 1.0;
+        return winner.get() == currentPlayer ? state.reward() : 2.0 - state.reward();
     }
 
-    static void backPropagate(Node<Othell> node, int reward) {
+    static void backPropagate(Node<Othello> node, double reward) {
         boolean rewardForWhite = node.white();
         while (node != null) {
-            if (node instanceof OthellNode oNode) {
+            if (node instanceof OthelloNode oNode) {
                 oNode.incrementPlayouts();
                 if (node.white() == rewardForWhite) {
                     oNode.addWins(reward);
                 } else {
-                    oNode.addWins(2 - reward);
+                    oNode.addWins(2.0 - reward);
                 }
                 node = oNode.getParent();
             } else {
@@ -154,10 +142,10 @@ public class OthellMCTS {
         }
     }
 
-    static Node<Othell> bestUCTNode(Node<Othell> node) {
+    static Node<Othello> bestUCTNode(Node<Othello> node) {
         int parentPlayouts = node.playouts();
         return Collections.max(node.children(), Comparator.comparing(
-                n -> ((double) n.wins()) / n.playouts() + C * Math.sqrt(Math.log(parentPlayouts) / n.playouts())));
+                n -> (n.wins()) / (double) n.playouts() + C * Math.sqrt(Math.log(parentPlayouts) / n.playouts())));
     }
 
     public static String othellShowBoard(String state) {

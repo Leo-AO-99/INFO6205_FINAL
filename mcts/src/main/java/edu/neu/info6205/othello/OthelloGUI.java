@@ -1,4 +1,4 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -23,12 +23,12 @@ public class OthelloGUI extends JFrame {
     private static final int TILE_SIZE = 60;
     private static final int BOARD_SIZE = 8;
 
-    private Othell game;
-    private Othell.OthellState state;
+    private Othello game;
+    private Othello.OthelloState state;
     private JPanel boardPanel;
     private JLabel statusLabel;
     private List<NextStep> validMoves;
-    private final Deque<Othell.OthellState> history = new ArrayDeque<>();
+    private final Deque<Othello.OthelloState> history = new ArrayDeque<>();
     private boolean aiVsAi = false;
 
     public OthelloGUI() {
@@ -85,8 +85,8 @@ public class OthelloGUI extends JFrame {
     }
 
     private void initGame() {
-        game = new Othell(System.currentTimeMillis());
-        state = (Othell.OthellState) game.start();
+        game = new Othello(System.currentTimeMillis());
+        state = (Othello.OthelloState) game.start();
         validMoves = extractValidMoves(state);
         history.clear();
         aiVsAi = false;
@@ -101,11 +101,11 @@ public class OthelloGUI extends JFrame {
         int col = e.getX() / TILE_SIZE;
         int player = state.player();
 
-        for (OthellMove move : state.moves(player).stream().map(m -> (OthellMove) m).toList()) {
+        for (OthelloMove move : state.moves(player).stream().map(m -> (OthelloMove) m).toList()) {
             NextStep step = move.move();
             if (step.x == row && step.y == col) {
                 history.push(state);
-                state = (Othell.OthellState) state.next(move);
+                state = (Othello.OthelloState) state.next(move);
                 validMoves = extractValidMoves(state);
                 updateStatusLabel();
                 repaint();
@@ -120,9 +120,9 @@ public class OthelloGUI extends JFrame {
         if (state.isTerminal())
             return;
         history.push(state);
-        OthellNode root = new OthellNode(state);
-        OthellNode next = new OthellNode(OthellMCTS.nextNode(root).state());
-        state = (Othell.OthellState) next.state();
+        OthelloNode root = new OthelloNode(state);
+        OthelloNode next = new OthelloNode(OthelloMCTS.nextNode(root).state());
+        state = (Othello.OthelloState) next.state();
         validMoves = extractValidMoves(state);
         updateStatusLabel();
         repaint();
@@ -156,22 +156,22 @@ public class OthelloGUI extends JFrame {
     private void checkEnd() {
         if (state.isTerminal()) {
             Optional<Integer> winner = state.winner();
-            String message = winner.map(w -> w == Othell.BLACK ? "Black wins!" : "White wins!")
+            String message = winner.map(w -> w == Othello.BLACK ? "Black wins!" : "White wins!")
                     .orElse("It's a draw!");
             JOptionPane.showMessageDialog(this, message);
         }
     }
 
-    private List<NextStep> extractValidMoves(Othell.OthellState currentState) {
+    private List<NextStep> extractValidMoves(Othello.OthelloState currentState) {
         List<NextStep> moves = new ArrayList<>();
-        for (OthellMove move : currentState.moves(currentState.player()).stream().map(m -> (OthellMove) m).toList()) {
+        for (OthelloMove move : currentState.moves(currentState.player()).stream().map(m -> (OthelloMove) m).toList()) {
             moves.add(move.move());
         }
         return moves;
     }
 
     private void updateStatusLabel() {
-        String player = (state.player() == Othell.BLACK) ? "Black ●" : "White ○";
+        String player = (state.player() == Othello.BLACK) ? "Black ●" : "White ○";
         statusLabel.setText(" Current Turn: " + player);
     }
 
@@ -184,10 +184,10 @@ public class OthelloGUI extends JFrame {
                 g.drawRect(j * TILE_SIZE, i * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
                 int val = state.showBoard().charAt(i * 9 + j) - '0';
-                if (val == Othell.BLACK) {
+                if (val == Othello.BLACK) {
                     g.setColor(Color.BLACK);
                     g.fillOval(j * TILE_SIZE + 10, i * TILE_SIZE + 10, TILE_SIZE - 20, TILE_SIZE - 20);
-                } else if (val == Othell.WHITE) {
+                } else if (val == Othello.WHITE) {
                     g.setColor(Color.WHITE);
                     g.fillOval(j * TILE_SIZE + 10, i * TILE_SIZE + 10, TILE_SIZE - 20, TILE_SIZE - 20);
                 } else {

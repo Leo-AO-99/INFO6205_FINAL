@@ -1,4 +1,4 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.util.List;
 

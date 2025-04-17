@@ -21,7 +21,7 @@ public class TicTacToeNode implements Node<TicTacToe> {
         playouts++;
     }
 
-    public void addWins(int reward) {
+    public void addWins(double reward) {
         wins += reward;
     }
 
@@ -92,7 +92,7 @@ public class TicTacToeNode implements Node<TicTacToe> {
      *         a draw is worth 1 point.
      */
     @Override
-    public int wins() {
+    public double wins() {
         return wins;
     }
 
@@ -130,7 +130,7 @@ public class TicTacToeNode implements Node<TicTacToe> {
     private final State<TicTacToe> state;
     private final ArrayList<Node<TicTacToe>> children;
 
-    private int wins;
+    private double wins;
     private int playouts;
     private TicTacToeNode parent;
 }
