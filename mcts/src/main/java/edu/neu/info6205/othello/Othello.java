@@ -94,10 +94,10 @@ public class Othello implements Game<Othello> {
             if (reward > wholeScore) {
                 return 2.0;
             } else if (reward < -wholeScore) {
-                return 0.0;
+                return 1.0;
             }
 
-            return reward / wholeScore * 2.0;
+            return reward / wholeScore + 1.0;
         }
 
         @Override
