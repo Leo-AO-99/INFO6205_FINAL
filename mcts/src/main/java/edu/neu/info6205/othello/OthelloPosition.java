@@ -1,4 +1,4 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,7 +7,7 @@ import java.util.Optional;
 
 
 
-public final class OthellPosition {
+public final class OthelloPosition {
 
     private final int[][] grid;
     private final int whiteCount;
@@ -20,16 +20,16 @@ public final class OthellPosition {
 
     private final static int GRID_SIZE = 8;
 
-    public OthellPosition(int[][] grid, int last) {
+    public OthelloPosition(int[][] grid, int last) {
         this.grid = grid;
         this.last = last;
         int wc = 0;
         int bc = 0;
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] == Othell.WHITE) {
+                if (grid[i][j] == Othello.WHITE) {
                     wc++;
-                } else if (grid[i][j] == Othell.BLACK) {
+                } else if (grid[i][j] == Othello.BLACK) {
                     bc++;
                 }
             }
@@ -70,23 +70,27 @@ public final class OthellPosition {
         this.positionState = ps;
     }
 
-    public OthellPosition() {
+    public OthelloPosition() {
         this.grid = new int[GRID_SIZE][GRID_SIZE];
-        this.grid[3][3] = Othell.BLACK;
-        this.grid[4][4] = Othell.BLACK;
-        this.grid[3][4] = Othell.WHITE;
-        this.grid[4][3] = Othell.WHITE;
-        this.last = Othell.WHITE;
-        this.nextPlayer = Othell.BLACK;
+        this.grid[3][3] = Othello.BLACK;
+        this.grid[4][4] = Othello.BLACK;
+        this.grid[3][4] = Othello.WHITE;
+        this.grid[4][3] = Othello.WHITE;
+        this.last = Othello.WHITE;
+        this.nextPlayer = Othello.BLACK;
         this.count = 4;
         this.whiteCount = 2;
         this.blackCount = 2;
-        this.possibleMoves = moves(Othell.BLACK);
+        this.possibleMoves = moves(Othello.BLACK);
         this.positionState = PositionState.IN_PEOGRESS;
     }
 
     public int getPlayer() {
         return nextPlayer;
+    }
+
+    public int getPiece(int x, int y) {
+        return grid[x][y];
     }
 
 
@@ -101,15 +105,15 @@ public final class OthellPosition {
 
     public Optional<Integer> winner() {
         if (positionState == PositionState.WHITE_WIN) {
-            return Optional.of(Othell.WHITE);
+            return Optional.of(Othello.WHITE);
         } else if (positionState == PositionState.BLACK_WIN) {
-            return Optional.of(Othell.BLACK);
+            return Optional.of(Othello.BLACK);
         }
         return Optional.empty();
     }
 
     static int opponent(int player) {
-        return player == Othell.BLACK ? Othell.WHITE : Othell.BLACK;
+        return player == Othello.BLACK ? Othello.WHITE : Othello.BLACK;
     }
 
     private boolean checkFlipDirection(int x, int y, int dx, int dy, int player) {
@@ -127,7 +131,7 @@ public final class OthellPosition {
         while (true) { 
             nx += dx;
             ny += dy;
-            if (!inBounds(nx, ny) || grid[nx][ny] == Othell.EMPTY) {
+            if (!inBounds(nx, ny) || grid[nx][ny] == Othello.EMPTY) {
                 return false;
             }
             if (grid[nx][ny] == player) {
@@ -139,7 +143,7 @@ public final class OthellPosition {
     private List<int[]> checkPlace(int x, int y, int player) {
         List<int[]> validDirections = new ArrayList<>();
 
-        if (grid[x][y] != Othell.EMPTY) {
+        if (grid[x][y] != Othello.EMPTY) {
             return validDirections;
         }
 
@@ -182,7 +186,7 @@ public final class OthellPosition {
             int nx = x + dx;
             int ny = y + dy;
             while (inBounds(nx, ny)) {
-                if (newGrid[nx][ny] == Othell.EMPTY) {
+                if (newGrid[nx][ny] == Othello.EMPTY) {
                     throw new IllegalArgumentException("Invalid move");
                 }
                 if (newGrid[nx][ny] == nextStep.player) {
@@ -205,7 +209,7 @@ public final class OthellPosition {
      * @param player
      * @return
      */
-    public OthellPosition move(NextStep nextStep, int player) {
+    public OthelloPosition move(NextStep nextStep, int player) {
         // double check
         if (nextStep.player != player) {
             throw new IllegalArgumentException("Invalid move");
@@ -215,7 +219,7 @@ public final class OthellPosition {
         flip(newGrid, nextStep);
 
 
-        return new OthellPosition(newGrid, player);
+        return new OthelloPosition(newGrid, player);
     }
 
     public String showBoard() {
@@ -249,14 +253,14 @@ public final class OthellPosition {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof OthellPosition position))
+        if (!(o instanceof OthelloPosition position))
             return false;
-        return Arrays.deepEquals(grid, position.grid);
+        return Arrays.deepEquals(grid, position.grid) && nextPlayer == position.nextPlayer;
     }
 
     @Override
     public int hashCode() {
-        return Arrays.deepHashCode(grid);
+        return 31 * Arrays.deepHashCode(grid) + nextPlayer;
     }
 
 

@@ -205,6 +205,11 @@ public class TicTacToe implements Game<TicTacToe> {
             return random;
         }
 
+        @Override
+        public double reward() {
+            return 2.0;
+        }
+
         /**
          * Get the moves that can be made directly from the given state.
          * The moves can be in any order--the order will be randomized for usage.

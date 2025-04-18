@@ -1,18 +1,18 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.util.List;
 
 import edu.neu.info6205.core.Move;
 
-public class OthellMove implements Move<Othell> {
+public class OthelloMove implements Move<Othello> {
 
     private final NextStep nextStep;
 
-    public OthellMove(NextStep nextStep) {
+    public OthelloMove(NextStep nextStep) {
         this.nextStep = nextStep;
     }
 
-    public OthellMove(int player, int x, int y, List<int[]> directions) {
+    public OthelloMove(int player, int x, int y, List<int[]> directions) {
         this.nextStep = new NextStep(player, x, y, directions);
     }
 

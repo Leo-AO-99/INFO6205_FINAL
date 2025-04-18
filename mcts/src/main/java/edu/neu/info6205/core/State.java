@@ -74,6 +74,8 @@ public interface State<G extends Game> {
      */
     State<G> next(Move<G> move);
 
+    double reward();
+
     /**
      * Method to yield a (random) iterator of moves for the given player.
      *

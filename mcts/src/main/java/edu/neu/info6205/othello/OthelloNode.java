@@ -1,4 +1,4 @@
-package edu.neu.info6205.othell;
+package edu.neu.info6205.othello;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,9 +6,9 @@ import java.util.Collection;
 import edu.neu.info6205.core.Node;
 import edu.neu.info6205.core.State;
 
-public class OthellNode implements Node<Othell> {
+public class OthelloNode implements Node<Othello> {
 
-    public OthellNode getParent() {
+    public OthelloNode getParent() {
         return parent;
     }
 
@@ -16,7 +16,7 @@ public class OthellNode implements Node<Othell> {
         playouts++;
     }
 
-    public void addWins(int reward) {
+    public void addWins(double reward) {
         wins += reward;
     }
 
@@ -26,17 +26,17 @@ public class OthellNode implements Node<Othell> {
     }
 
     @Override
-    public State<Othell> state() {
+    public State<Othello> state() {
         return state;
     }
 
     @Override
     public boolean white() {
-        return state.player() == Othell.WHITE;
+        return state.player() == Othello.WHITE;
     }
 
     @Override
-    public Collection<Node<Othell>> children() {
+    public Collection<Node<Othello>> children() {
         return children;
     }
 
@@ -47,12 +47,12 @@ public class OthellNode implements Node<Othell> {
     }
 
     @Override
-    public void addChild(State<Othell> state) {
-        children.add(new OthellNode(state, this));
+    public void addChild(State<Othello> state) {
+        children.add(new OthelloNode(state, this));
     }
 
     @Override
-    public int wins() {
+    public double wins() {
         return wins;
     }
 
@@ -62,20 +62,20 @@ public class OthellNode implements Node<Othell> {
     }
     
 
-    public OthellNode(State<Othell> state) {
+    public OthelloNode(State<Othello> state) {
         this(state, null);
     }
 
-    public OthellNode(State<Othell> state, OthellNode parent) {
+    public OthelloNode(State<Othello> state, OthelloNode parent) {
         this.state = state;
         this.children = new ArrayList<>();
         this.parent = parent;
     }
 
-    private final State<Othell> state;
-    private final ArrayList<Node<Othell>> children;
+    private final State<Othello> state;
+    private final ArrayList<Node<Othello>> children;
 
-    private int wins;
+    private double wins;
     private int playouts;
-    private OthellNode parent;
+    private OthelloNode parent;
 }
