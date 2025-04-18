@@ -1,5 +1,8 @@
 package edu.neu.info6205.othello;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,9 +19,26 @@ public class OthelloMCTS {
     private static final int SIMULATION_COUNT = 10000;
     private static final double C = 1.414;
 
+    // Global timing accumulators (in milliseconds)
+    private static long totalSelectTime = 0;
+    private static long totalExpandTime = 0;
+    private static long totalSimulateTime = 0;
+    private static long totalBackpropTime = 0;
+    private static long totalTime = 0;
+
+    private static PrintWriter csvWriter;
+    private static int stepCount = 0;
 
     public static void main(String[] args) {
-        long seed = System.currentTimeMillis();
+        try {
+            csvWriter = new PrintWriter(new FileWriter("mcts_timing_log.csv"));
+            csvWriter.println("Step,SelectTime,ExpandTime,SimulateTime,BackpropTime,TotalTime"); // header
+        } catch (IOException e) {
+            System.err.println("Failed to create CSV file.");
+            e.printStackTrace();
+            return;
+        }
+        long seed = System.nanoTime();
         System.out.println("Seed: " + seed);
         Othello game = new Othello(seed);
         Node<Othello> root = new OthelloNode(game.start());
@@ -34,15 +54,66 @@ public class OthelloMCTS {
         } else {
             System.out.println("Game over. Draw!");
         }
+
+        System.out.println("==== Final Timing Summary ====");
+        System.out.printf("Total Selection Time: %.3f ms\n", totalSelectTime / 1_000_000.0);
+        System.out.printf("Total Expansion Time: %.3f ms\n", totalExpandTime / 1_000_000.0);
+        System.out.printf("Total Simulation Time: %.3f ms\n", totalSimulateTime / 1_000_000.0);
+        System.out.printf("Total Backpropagation Time: %.3f ms\n", totalBackpropTime / 1_000_000.0);
+        System.out.printf("Total MCTS Time: %.3f ms\n", totalTime / 1_000_000.0);
+        System.out.println("================================");
+
+        csvWriter.close();
+        System.out.println("Timing data written to mcts_timing_log.csv");
     }
 
     static Node<Othello> nextNode(Node<Othello> node) {
+        long totalStart = System.nanoTime();
+        long selectTime = 0;
+        long expandTime = 0;
+        long simulateTime = 0;
+        long backpropTime = 0;
+
         for (int i = 0; i < SIMULATION_COUNT; i++) {
+            long t1 = System.nanoTime();
             Node<Othello> current = select(node);
+            long t2 = System.nanoTime();
+            selectTime += (t2 - t1);
+
             current = expand(current);
+            long t3 = System.nanoTime();
+            expandTime += (t3 - t2);
+
             double reward = simulate(current);
+            long t4 = System.nanoTime();
+            simulateTime += (t4 - t3);
+
             backPropagate(current, reward);
+            long t5 = System.nanoTime();
+            backpropTime += (t5 - t4);
         }
+
+        long totalEnd = System.nanoTime();
+        long iterationTime = totalEnd - totalStart;
+
+        // Add to global accumulators
+        totalSelectTime += selectTime;
+        totalExpandTime += expandTime;
+        totalSimulateTime += simulateTime;
+        totalBackpropTime += backpropTime;
+        totalTime += iterationTime;
+
+        // Per-node report
+        System.out.println("==== Timing Report for this node ====");
+        System.out.println("Selection Time: " + selectTime / 1_000_000.0 + " ms");
+        System.out.println("Expansion Time: " + expandTime / 1_000_000.0 + " ms");
+        System.out.println("Simulation Time: " + simulateTime / 1_000_000.0 + " ms");
+        System.out.println("Backpropagation Time: " + backpropTime / 1_000_000.0 + " ms");
+        System.out.println("Total Time for this node: " + iterationTime / 1_000_000.0 + " ms");
+        System.out.println("=====================================");
+        csvWriter.printf("%d,%.3f,%.3f,%.3f,%.3f,%.3f%n", ++stepCount, selectTime / 1_000_000.0,
+                expandTime / 1_000_000.0, simulateTime / 1_000_000.0, backpropTime / 1_000_000.0,
+                iterationTime / 1_000_000.0);
 
         return Collections.max(node.children(), Comparator.comparing(Node::playouts));
     }
