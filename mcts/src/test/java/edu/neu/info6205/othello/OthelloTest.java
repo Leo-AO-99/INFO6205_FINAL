@@ -18,7 +18,6 @@ public class OthelloTest {
             OthelloMove move = (OthelloMove) state.chooseMove(state.player());
 
             state = (OthelloState) state.next(move);
-
         }
     }
 }

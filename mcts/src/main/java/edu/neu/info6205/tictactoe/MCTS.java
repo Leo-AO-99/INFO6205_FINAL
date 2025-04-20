@@ -22,15 +22,30 @@ public class MCTS {
     private static final int SIMULATION_COUNT = 5000;
     static double C = 1.414;
 
-    private static long totalSelectTime = 0;
-    private static long totalExpandTime = 0;
-    private static long totalSimulateTime = 0;
-    private static long totalBackpropTime = 0;
-    private static long totalTime = 0;
-    private static int stepCount = 0;
+    public static long totalSelectTime = 0;
+    public static long totalExpandTime = 0;
+    public static long totalSimulateTime = 0;
+    public static long totalBackpropTime = 0;
+    public static long totalTime = 0;
+    public static int stepCount = 0;
     private static PrintWriter csvWriter;
 
     public static void main(String[] args) {
+        long seed = System.currentTimeMillis();
+        
+        System.out.println("Seed: " + seed);
+        MCTS mcts = new MCTS(new TicTacToeNode(new TicTacToe(seed).new TicTacToeState()));
+        Node<TicTacToe> root = mcts.root;
+
+        while (!root.state().isTerminal()) {
+            root = nextNode(root);
+            System.out.println(showBoard(root.state()));
+        }
+        System.out.println("Game over");
+        System.exit(0);
+    }
+
+    public static void benchmark() {
         long seed = System.currentTimeMillis();
         System.out.println("Seed: " + seed);
 
@@ -47,7 +62,7 @@ public class MCTS {
         Node<TicTacToe> root = mcts.root;
 
         while (!root.state().isTerminal()) {
-            root = nextNode(root);
+            root = nextNodeWithBenchmark(root);
             System.out.println(showBoard(root.state()));
         }
 
@@ -63,10 +78,22 @@ public class MCTS {
 
         csvWriter.close();
         System.out.println("Timing data written to ttt_mcts_timing_log.csv");
-        System.exit(0);
     }
 
-    static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
+    public boolean isTerminal(){
+        return root.state().isTerminal();
+    }
+
+    public Optional<Integer> winner() {
+        return root.state().winner();
+    }
+
+    static Node<TicTacToe> nextNode(MCTS mcts) {
+        Node<TicTacToe> root = mcts.root;
+        return nextNode(root);
+    }
+
+    static Node<TicTacToe> nextNodeWithBenchmark(Node<TicTacToe> node) {
         long totalStart = System.nanoTime();
         long selectTime = 0;
         long expandTime = 0;
@@ -113,14 +140,30 @@ public class MCTS {
         return new TicTacToeNode(Collections.max(node.children(), Comparator.comparing(c -> c.playouts())).state());
     }
 
+    static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
+        for (int i = 0; i < SIMULATION_COUNT; i++) {
+            // select
+            Node<TicTacToe> curNode = select(node);
+            // expand
+            curNode = expand(curNode);
+            // simulate
+            int reward = simulate(curNode);
+            // backpropagate
+            backPropagate(curNode, reward);
+        }
+
+        // Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.wins() / c.playouts()));
+        Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.playouts()));
+
+        return new TicTacToeNode(bestChild.state());
+    }
+
     static int simulate(Node<TicTacToe> node) {
-        boolean invert = true;
         State<TicTacToe> simState = node.state();
         int currentPlayer = simState.player();
         while (!simState.isTerminal()) {
             Move<TicTacToe> move = simState.chooseMove(simState.player());
             simState = simState.next(move);
-            invert = !invert;
         }
 
         Optional<Integer> winner = simState.winner();
@@ -137,11 +180,15 @@ public class MCTS {
     }
 
     static void backPropagate(Node<TicTacToe> node, int reward) {
+        int player = node.state().player();
+
         while (node != null) {
             if (node instanceof TicTacToeNode ticNode) {
+                int curPlayer = ticNode.state().player();
                 ticNode.incrementPlayouts();
-                ticNode.addWins(reward);
-                reward = 2 - reward;
+                ticNode.addWins(curPlayer == player ? reward : 2 - reward);
+                // ticNode.addWins(reward);
+                // reward = 2 - reward;
                 node = ticNode.getParent();
             } else {
                 throw new RuntimeException("Node is not a TicTacToeNode");

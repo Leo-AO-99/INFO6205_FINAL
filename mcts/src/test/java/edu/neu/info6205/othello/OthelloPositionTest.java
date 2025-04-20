@@ -3,11 +3,6 @@ package edu.neu.info6205.othello;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-// import edu.neu.info6205.othello.NextStep;
-// import edu.neu.info6205.othello.Othello;
-// import edu.neu.info6205.othello.OthelloPosition;
-// import edu.neu.info6205.othello.PositionState;
-
 public class OthelloPositionTest {
     @Test
     public void testBlackWin1() {
