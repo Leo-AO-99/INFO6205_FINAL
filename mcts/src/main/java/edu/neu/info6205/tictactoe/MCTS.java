@@ -162,33 +162,19 @@ public class MCTS {
     }
 
     static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
-        long totalStart = System.nanoTime();
-        long selectTime = 0;
-        long expandTime = 0;
-        long simulateTime = 0;
-        long backpropTime = 0;
-
         for (int i = 0; i < SIMULATION_COUNT; i++) {
-            long t1 = System.nanoTime();
+            // select
             Node<TicTacToe> curNode = select(node);
-            long t2 = System.nanoTime();
-            selectTime += (t2 - t1);
-
+            // expand
             curNode = expand(curNode);
-            long t3 = System.nanoTime();
-            expandTime += (t3 - t2);
-
+            // simulate
             int reward = simulate(curNode);
-            long t4 = System.nanoTime();
-            simulateTime += (t4 - t3);
-
+            // backpropagate
             backPropagate(curNode, reward);
-            long t5 = System.nanoTime();
-            backpropTime += (t5 - t4);
         }
 
-        long totalEnd = System.nanoTime();
-        long totalNano = totalEnd - totalStart;
+        // Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.wins() / c.playouts()));
+        Node<TicTacToe> bestChild = Collections.max(node.children(), Comparator.comparing(c -> c.playouts()));
 
         return new TicTacToeNode(bestChild.state());
     }
