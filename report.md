@@ -1,6 +1,6 @@
 # Team 4 MCTS Report
 
-TODO GUI, minimax, unit test
+Our project is a maven project
 
 ## MCTS
 
@@ -397,7 +397,18 @@ Here are some observations and related consumption
 
 ### Conclusion
 
-尽管我们使用了启发式函数，但是实际上效果依然很差，因为othello是一个变化很大的游戏，即使一个位子你已经占好点了，但是可能在下一步或者在游戏终局 就属于opponent了，而且POSITION_WEIGHTS 也只是我们根据经验设计出来的，虽然我们在学习RL 希望能让我们的模型更聪明，但是因为时间原因，只能作为一个后续的个人项目。但是我们不断发现问题，思考问题，解决问题，是一个很宝贵的经历。
+Despite our use of heuristic functions, the actual effect is still poor because Othello is a game with significant variability. Even if you have secured a good position, it may belong to your opponent in the next move or at the end of the game. Additionally, the POSITION_WEIGHTS are only designed based on our experience. Although we are learning RL in hopes of making our model smarter, due to time constraints, this can only be pursued as a subsequent personal project. Nevertheless, continuously discovering problems, thinking about them, and solving them has been a valuable experience.
+
+During our testing, we encountered memory issues when the simulation count was set too high. This is a common challenge in MCTS implementations, especially for games with high branching factors like Othello. If we had more time, we would implement the following optimizations:
+
+#### Selective Expansion
+
+Instead of expanding all possible moves, we could implement a selective expansion strategy that only expands the most promising nodes. This approach would:
+
+1. Calculate a heuristic score for each potential move
+2. Sort moves based on their scores
+3. Only expand the top N moves (e.g., top 5 or 10)
+
 
 ## Reference
 

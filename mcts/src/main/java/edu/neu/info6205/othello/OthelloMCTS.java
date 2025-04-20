@@ -37,7 +37,6 @@ public class OthelloMCTS {
         Node<Othello> root = new OthelloNode(game.start());
 
         while (!root.state().isTerminal()) {
-            System.out.println("hahaha");
             root = nextNode(root);
             System.out.println(othellShowBoard(((Othello.OthelloState) root.state()).showBoard()));
         }
