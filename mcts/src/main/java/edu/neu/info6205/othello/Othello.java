@@ -2,7 +2,6 @@ package edu.neu.info6205.othello;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -45,6 +44,10 @@ public class Othello implements Game<Othello> {
         return BLACK;
     }
 
+    public Othello() {
+        this(System.currentTimeMillis());
+    }
+
     public Othello(Random random) {
         this.random = random;
     }
@@ -59,15 +62,31 @@ public class Othello implements Game<Othello> {
 
         private final OthelloPosition position;
         private final Othello game;
+        private final int player;
+        private final ArrayList<Move<Othello>> moves;
     
         public OthelloState(OthelloPosition position) {
             this.position = position;
             this.game = Othello.this;
+            this.player = position.getPlayer();
+            this.moves = new ArrayList<>();
+            for (NextStep nextStep : position.getPossibleMoves()) {
+                if (nextStep.player == player) {
+                    moves.add(new OthelloMove(nextStep));
+                }
+            }
         }
     
         public OthelloState() {
             this.game = Othello.this;
             this.position = new OthelloPosition();
+            this.player = position.getPlayer();
+            this.moves = new ArrayList<>();
+            for (NextStep nextStep : position.getPossibleMoves()) {
+                if (nextStep.player == player) {
+                    moves.add(new OthelloMove(nextStep));
+                }
+            }
         }
 
         public String showBoard() {
@@ -127,17 +146,21 @@ public class Othello implements Game<Othello> {
     
         @Override
         public Collection<Move<Othello>> moves(int player) {
-            List<NextStep> possibleMoves = position.getPossibleMoves();
-            ArrayList<Move<Othello>> list = new ArrayList<>();
-            for (NextStep nextStep : possibleMoves) {
-                list.add(new OthelloMove(nextStep));
+            if (player != this.player) {
+                return new ArrayList<>();
             }
-            return list;
+            return this.moves;
         }
     
         @Override
         public State<Othello> next(Move<Othello> move) {
             OthelloMove othellMove = (OthelloMove) move;
+            if (othellMove.player() != player()) {
+                throw new IllegalArgumentException("Invalid move");
+            }
+            if (!moves.contains(othellMove)) {
+                throw new IllegalArgumentException("Invalid move");
+            }
             NextStep nextStep = othellMove.move();
             return new OthelloState(position.move(nextStep, player()));
         }

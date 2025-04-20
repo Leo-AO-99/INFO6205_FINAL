@@ -22,12 +22,12 @@ public class MCTS {
     private static final int SIMULATION_COUNT = 5000;
     static double C = 1.414;
 
-    private static long totalSelectTime = 0;
-    private static long totalExpandTime = 0;
-    private static long totalSimulateTime = 0;
-    private static long totalBackpropTime = 0;
-    private static long totalTime = 0;
-    private static int stepCount = 0;
+    public static long totalSelectTime = 0;
+    public static long totalExpandTime = 0;
+    public static long totalSimulateTime = 0;
+    public static long totalBackpropTime = 0;
+    public static long totalTime = 0;
+    public static int stepCount = 0;
     private static PrintWriter csvWriter;
 
     public static void main(String[] args) {
@@ -66,7 +66,55 @@ public class MCTS {
         System.exit(0);
     }
 
-    static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
+    public static void benchmark() {
+        long seed = System.currentTimeMillis();
+        System.out.println("Seed: " + seed);
+
+        try {
+            csvWriter = new PrintWriter(new FileWriter("ttt_mcts_timing_log.csv"));
+            csvWriter.println("Step,SelectTime,ExpandTime,SimulateTime,BackpropTime,TotalTime");
+        } catch (IOException e) {
+            System.err.println("Failed to create CSV file.");
+            e.printStackTrace();
+            return;
+        }
+
+        MCTS mcts = new MCTS(new TicTacToeNode(new TicTacToe(seed).new TicTacToeState()));
+        Node<TicTacToe> root = mcts.root;
+
+        while (!root.state().isTerminal()) {
+            root = nextNodeWithBenchmark(root);
+            System.out.println(showBoard(root.state()));
+        }
+
+        System.out.println("Game over");
+
+        System.out.println("==== Final Timing Summary ====");
+        System.out.printf("Total Selection Time: %.3f ms%n", totalSelectTime / 1_000_000.0);
+        System.out.printf("Total Expansion Time: %.3f ms%n", totalExpandTime / 1_000_000.0);
+        System.out.printf("Total Simulation Time: %.3f ms%n", totalSimulateTime / 1_000_000.0);
+        System.out.printf("Total Backpropagation Time: %.3f ms%n", totalBackpropTime / 1_000_000.0);
+        System.out.printf("Total MCTS Time: %.3f ms%n", totalTime / 1_000_000.0);
+        System.out.println("================================");
+
+        csvWriter.close();
+        System.out.println("Timing data written to ttt_mcts_timing_log.csv");
+    }
+
+    public boolean isTerminal(){
+        return root.state().isTerminal();
+    }
+
+    public Optional<Integer> winner() {
+        return root.state().winner();
+    }
+
+    static Node<TicTacToe> nextNode(MCTS mcts) {
+        Node<TicTacToe> root = mcts.root;
+        return nextNode(root);
+    }
+
+    static Node<TicTacToe> nextNodeWithBenchmark(Node<TicTacToe> node) {
         long totalStart = System.nanoTime();
         long selectTime = 0;
         long expandTime = 0;
@@ -113,14 +161,44 @@ public class MCTS {
         return new TicTacToeNode(Collections.max(node.children(), Comparator.comparing(c -> c.playouts())).state());
     }
 
+    static Node<TicTacToe> nextNode(Node<TicTacToe> node) {
+        long totalStart = System.nanoTime();
+        long selectTime = 0;
+        long expandTime = 0;
+        long simulateTime = 0;
+        long backpropTime = 0;
+
+        for (int i = 0; i < SIMULATION_COUNT; i++) {
+            long t1 = System.nanoTime();
+            Node<TicTacToe> curNode = select(node);
+            long t2 = System.nanoTime();
+            selectTime += (t2 - t1);
+
+            curNode = expand(curNode);
+            long t3 = System.nanoTime();
+            expandTime += (t3 - t2);
+
+            int reward = simulate(curNode);
+            long t4 = System.nanoTime();
+            simulateTime += (t4 - t3);
+
+            backPropagate(curNode, reward);
+            long t5 = System.nanoTime();
+            backpropTime += (t5 - t4);
+        }
+
+        long totalEnd = System.nanoTime();
+        long totalNano = totalEnd - totalStart;
+
+        return new TicTacToeNode(bestChild.state());
+    }
+
     static int simulate(Node<TicTacToe> node) {
-        boolean invert = true;
         State<TicTacToe> simState = node.state();
         int currentPlayer = simState.player();
         while (!simState.isTerminal()) {
             Move<TicTacToe> move = simState.chooseMove(simState.player());
             simState = simState.next(move);
-            invert = !invert;
         }
 
         Optional<Integer> winner = simState.winner();
@@ -137,11 +215,15 @@ public class MCTS {
     }
 
     static void backPropagate(Node<TicTacToe> node, int reward) {
+        int player = node.state().player();
+
         while (node != null) {
             if (node instanceof TicTacToeNode ticNode) {
+                int curPlayer = ticNode.state().player();
                 ticNode.incrementPlayouts();
-                ticNode.addWins(reward);
-                reward = 2 - reward;
+                ticNode.addWins(curPlayer == player ? reward : 2 - reward);
+                // ticNode.addWins(reward);
+                // reward = 2 - reward;
                 node = ticNode.getParent();
             } else {
                 throw new RuntimeException("Node is not a TicTacToeNode");

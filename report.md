@@ -1,5 +1,7 @@
 # Team 4 MCTS Report
 
+TODO GUI, minimax, unit test
+
 ## MCTS
 
 We made the following key improvements to the MCTS algorithm:
@@ -159,7 +161,7 @@ Here are some observations and related consumption
 
 ### Conclusion
 
-In our practical tests, we found that if playouts are used as the criterion for selecting the next move, MCTS does not choose the center as the first move. Although this may seem counterintuitive at first, in the case of Tic-Tac-Toe, if both players play optimally, the game will always end in a draw—so the choice of the first move doesn’t actually matter. However, if we use win rate as the selection criterion, MCTS tends to choose the center as the first move.
+In our practical tests, we found that if playouts are used as the criterion for selecting the next move, MCTS does not choose the center as the first move. Although this may seem counterintuitive at first, in the case of Tic-Tac-Toe, if both players play optimally, the game will always end in a draw—so the choice of the first move doesn't actually matter. However, if we use win rate as the selection criterion, MCTS tends to choose the center as the first move.
 
 ## Othello
 
@@ -310,6 +312,50 @@ The backPropagate(`Node<Othello>` node, double reward) method is used to perform
 
 run `main()` in OthelloGUI.java for Othello GUI.
 
+1. Chessboard rendering and piece display
+
+Draw black pieces (●), white pieces (○) and empty Spaces in real time according to the game status.
+
+The legal placement positions are indicated by semi-transparent yellow circles.
+
+2. Human-machine chess
+The user clicks on the chessboard to place the pieces:
+
+The GUI automatically identifies the click position and determines whether it is a legal operation.
+
+If it is legal, the system will automatically execute the player's move and call the AI response.
+
+After each move, the chessboard refreshes immediately and updates the player whose turn it is.
+
+3. AI vs. AI
+After the user clicks the "AI vs AI" button, the system automatically controls the AI of both sides to take turns making moves until the end of the game.
+
+There is a 300-millisecond delay between each move, simulating the rhythm of a real game.
+
+Suitable for performance testing and automatic demonstration scenarios.
+
+4. Undo function
+By clicking the "Undo" button, users can undo the previous operation.
+
+The internal state stack is used to store historical states and supports multiple consecutive revocation.
+
+5. Reset the game
+Users can immediately restart a new round of the game by clicking the "Reset" button.
+
+The chessboard status, round information and historical records have all been cleared.
+
+6. Game endgame detection and result display
+When the final game is detected, a dialog box will pop up automatically to prompt:
+
+The black side wins/the white side wins/draws.
+
+Visual result feedback is carried out using the JOptionPane component.
+
+7. Status bar information prompt
+The current player's turn (black side/white side) is displayed in real time at the bottom of the interface.
+
+The status bar is updated dynamically according to the game progress without user intervention.
+
 ![](./start.png)
 
 ![](./win.png)
@@ -382,12 +428,38 @@ This part explain targets of each unit test
 
 #### mcts.test.java.edu.info6205.tictactoe.MCTSTest
 
+- **testTerminal**: Verifies the correct identification of terminal states in TicTacToe games
+- **testMCTS**: Tests the complete MCTS algorithm flow and verifies the correct reduction of empty spaces after each move
+- **testDraw**: Confirms that when both players use MCTS optimally, TicTacToe games consistently end in draws
+- **testBenchmark**: Tests the performance measurement functionality for TicTacToe MCTS
+
 #### mcts.test.java.edu.info6205.othello.OthelloMCTSTest
+
+- **testTerminal**: Verifies the correct identification of terminal states in Othello games
+- **testOthelloMCTS**: Tests the complete MCTS algorithm flow for Othello from initial state to game termination
+- **testBenchmark**: Tests the performance measurement functionality for Othello MCTS including time metrics for each phase
 
 #### mcts.test.java.edu.info6205.othello.OthelloNodeTest
 
+- **winsAndPlayouts**: Tests win counter and playout counter incrementation, and leaf node identification
+- **state**: Verifies that nodes correctly store and access their game state
+- **white**: Tests player identification functionality
+- **children**: Confirms that new nodes start with empty children collections
+- **expandAll**: Tests that node expansion generates the correct number of child nodes for a given position
+
 #### mcts.test.java.edu.info6205.othello.OthelloPositionTest
+
+- **Win state tests**: Two tests (testBlackWin1, testBlackWin2) verifying the correct identification of winning states
+- **In-progress state tests**: Tests (testInProgress1, testInProgress2) to verify correct identification of ongoing games
+- **Move generation**: Tests the move functionality and verifies piece counts after moves are executed
 
 #### mcts.test.java.edu.info6205.othello.OthelloStateTest
 
+- **Board representation**: Tests the showBoard method to verify correct string representation of game boards
+- **Reward calculation**: Tests the reward() method for different game states
+- **Legal move generation**: Tests the moves() method to verify correct identification of legal moves
+- **State transition**: Tests the next() method for both legal and illegal moves
+
 #### mcts.test.java.edu.info6205.othello.OthelloTest
+
+- **runGame**: Tests whether the game logic can successfully run a complete game from start to finish

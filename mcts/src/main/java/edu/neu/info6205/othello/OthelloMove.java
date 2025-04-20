@@ -1,6 +1,7 @@
 package edu.neu.info6205.othello;
 
 import java.util.List;
+import java.util.Objects;
 
 import edu.neu.info6205.core.Move;
 
@@ -31,4 +32,18 @@ public class OthelloMove implements Move<Othello> {
                 "nextStep=" + nextStep +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OthelloMove that = (OthelloMove) o;
+        return nextStep.equals(that.nextStep);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nextStep);
+    }
+    
 }

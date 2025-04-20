@@ -16,20 +16,41 @@ import static edu.neu.info6205.othello.Othello.POSITION_WEIGHTS;
 
 public class OthelloMCTS {
 
-    private static final int SIMULATION_COUNT = 10000;
+    private static final int SIMULATION_COUNT = 5000;
     private static final double C = 1.414;
 
     // Global timing accumulators (in milliseconds)
-    private static long totalSelectTime = 0;
-    private static long totalExpandTime = 0;
-    private static long totalSimulateTime = 0;
-    private static long totalBackpropTime = 0;
-    private static long totalTime = 0;
+    public static long totalSelectTime = 0;
+    public static long totalExpandTime = 0;
+    public static long totalSimulateTime = 0;
+    public static long totalBackpropTime = 0;
+    public static long totalTime = 0;
 
     private static PrintWriter csvWriter;
-    private static int stepCount = 0;
+    public static int stepCount = 0;
 
     public static void main(String[] args) {
+        long seed = System.currentTimeMillis();
+        // long seed = 1745109557071l;
+        System.out.println("Seed: " + seed);
+        Othello game = new Othello(seed);
+        Node<Othello> root = new OthelloNode(game.start());
+
+        while (!root.state().isTerminal()) {
+            System.out.println("hahaha");
+            root = nextNode(root);
+            System.out.println(othellShowBoard(((Othello.OthelloState) root.state()).showBoard()));
+        }
+
+        Optional<Integer> winner = root.state().winner();
+        if (winner.isPresent()) {
+            System.out.println("Game over. Winner: " + (winner.get() == Othello.BLACK ? "Black" : "White"));
+        } else {
+            System.out.println("Game over. Draw!");
+        }
+    }
+
+    public static void benchmark() {
         try {
             csvWriter = new PrintWriter(new FileWriter("mcts_timing_log.csv"));
             csvWriter.println("Step,SelectTime,ExpandTime,SimulateTime,BackpropTime,TotalTime"); // header
@@ -44,7 +65,7 @@ public class OthelloMCTS {
         Node<Othello> root = new OthelloNode(game.start());
 
         while (!root.state().isTerminal()) {
-            root = nextNode(root);
+            root = nextNodeBenchmark(root);
             System.out.println(othellShowBoard(((Othello.OthelloState) root.state()).showBoard()));
         }
 
@@ -67,7 +88,11 @@ public class OthelloMCTS {
         System.out.println("Timing data written to mcts_timing_log.csv");
     }
 
-    static Node<Othello> nextNode(Node<Othello> node) {
+    public OthelloMCTS(Node<Othello> root) {
+        this.root = root;
+    }
+
+    static Node<Othello> nextNodeBenchmark(Node<Othello> node) {
         long totalStart = System.nanoTime();
         long selectTime = 0;
         long expandTime = 0;
@@ -114,6 +139,26 @@ public class OthelloMCTS {
         csvWriter.printf("%d,%.3f,%.3f,%.3f,%.3f,%.3f%n", ++stepCount, selectTime / 1_000_000.0,
                 expandTime / 1_000_000.0, simulateTime / 1_000_000.0, backpropTime / 1_000_000.0,
                 iterationTime / 1_000_000.0);
+
+        return Collections.max(node.children(), Comparator.comparing(Node::playouts));
+    }
+
+    public boolean isTerminal() {
+        return root.state().isTerminal();
+    }
+
+    static Node<Othello> nextNode(OthelloMCTS mcts) {
+        return nextNode(mcts.root);
+    }
+
+    static Node<Othello> nextNode(Node<Othello> node) {
+        for (int i = 0; i < SIMULATION_COUNT; i++) {
+            // System.out.println(i);
+            Node<Othello> current = select(node);
+            current = expand(current);
+            double reward = simulate(current);
+            backPropagate(current, reward);
+        }
 
         return Collections.max(node.children(), Comparator.comparing(Node::playouts));
     }
@@ -227,4 +272,6 @@ public class OthelloMCTS {
 
         return board;
     }
+
+    private final Node<Othello> root;
 }
