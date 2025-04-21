@@ -130,7 +130,7 @@ We made the following key improvements to the MCTS algorithm:
 
    incrementPlayouts() records how many times this node has been visited (simulated).
 
-   addWins(reward) accumulates the reward value, which is used to calculate the UTC score  for evaluating the node's potential.
+   addWins(reward) accumulates the reward value, which is used to calculate the UCT score  for evaluating the node's potential.
 
 ### Running Time
 
@@ -369,15 +369,21 @@ The current player's turn (black side/white side) is displayed in real time at t
 
 The status bar is updated dynamically according to the game progress without user intervention.
 
-![](./images/start.png)
 
-![](./images/win.png)
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/start.png" style="width: 48%;">
+    <img src="./images/win.png" style="width: 48%;">
+</div>
 
 ### Othello Running Time
 
 We use System.currentTimeMillis() to obtain the running times of the four stages.
 
-![](./images/othello_running_time.png)
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/othello_running_time.png" style="width: 48%; display: block; margin-left: auto; margin-right: auto;">
+</div>
 
 #### operations result
 
@@ -423,6 +429,14 @@ Instead of expanding all possible moves, we could implement a selective expansio
 3. Only expand the top N moves (e.g., top 5 or 10)
 
 ## Reference
+
+https://en.wikipedia.org/wiki/Monte_Carlo_tree_search
+
+https://int8.io/monte-carlo-tree-search-beginners-guide/
+
+https://en.wikipedia.org/wiki/Reversi
+
+ChatGPT
 
 ## Unit Tests
 
