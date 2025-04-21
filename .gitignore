@@ -2,3 +2,4 @@
 .vscode
 .idea
 mcts/target
+target

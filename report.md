@@ -73,31 +73,46 @@ We made the following key improvements to the MCTS algorithm:
    while (!simState.isTerminal()) {
       Move<TicTacToe> move = simState.chooseMove(simState.player());
       simState = simState.next(move);
-      invert = !invert;
    }
    ```
 
-   Repeat until the game ends (isTerminal()). The current player selects a legal random action, chooseMove(). Perform this action to obtain a new state. Alternating players (invert was previously used to handle the determination logic of "who caused this final result", although it has actually been annotated here).
+   Repeat until the game ends (isTerminal()). The current player selects a legal random action using chooseMove() and performs this action to obtain a new state.
 
 3. Evaluate the final score (Reward)
 
-   - If no one wins (a draw) : Return 1.
+   ```java
+   Optional<Integer> winner = simState.winner();
+   int reward = 2;
+   if (winner.isEmpty()) {
+       return 1;  // Draw
+   } else {
+       if (winner.get() == currentPlayer) {
+           return 2 - reward;  // Current player wins (returns 0)
+       } else {
+           return reward;  // Current player loses (returns 2)
+       }
+   }
+   ```
+   
+   - If no one wins (a draw): Return 1.
    - If someone wins:
-   - If the initial currentPlayer wins: Return 0 (the reward is small, indicating that the current move led to failure).
-   - Otherwise (currentPlayer loses) : Return 2 (the larger reward).
+     - If the initial currentPlayer wins: Return 0 (lower reward)
+     - Otherwise (currentPlayer loses): Return 2 (higher reward)
 
-#### backpropgate
+   This reward structure incentivizes moves that lead to opponent losses and penalizes moves that lead to the current player losing.
+
+#### backpropagate
 
    `backPropagate(Node<TicTacToe> node, int reward):`
 
-   This function is used to propagate the simulation result (reward) upwards and update the simulation times and victory times of all nodes along the entire path. In this way, future decisions can be based on more accurate historical data.
+   This function propagates the simulation result (reward) upwards and updates the simulation counts and victory scores of all nodes along the path.
 
    ```java
    while (node != null) {
       if (node instanceof TicTacToeNode ticNode) {
+         int curPlayer = ticNode.state().player();
          ticNode.incrementPlayouts();    // Total number of games played +1
-         ticNode.addWins(reward);        // Cumulative victory score（reward）
-         reward = 2 - reward;            // Reward value reversal（Switch back from the opponent's perspective）
+         ticNode.addWins(curPlayer == player ? reward : 2 - reward);  // Adjust reward based on player perspective
          node = ticNode.getParent();     // Propagate upwards to the parent node
       } else {
          throw new RuntimeException("Node is not a TicTacToeNode");
@@ -105,25 +120,23 @@ We made the following key improvements to the MCTS algorithm:
    }
    ```
 
-1. Why is reward = 2 - reward needed?
+1. Why do we adjust the reward based on player perspective?
 
-   MCTS is top-down search and bottom-up propagation.
+   MCTS involves top-down search and bottom-up propagation. In games where players take turns, the perspectives alternate at each level of the tree.
 
-   However, in the game, players take turns playing chess, and the perspectives of players on each level will alternate.
-
-   By reversing the reward, the victory value can be transformed from the victory of one side to the defeat of the other side, thereby correctly updating the "win rate estimation" of each layer.
+   By adjusting the reward based on the current node's player (`curPlayer == player ? reward : 2 - reward`), we ensure that wins are correctly attributed to the player who made the move at that level. This adjustment transforms a win for one player into a loss for the opponent, correctly updating the win rate estimation at each level.
 
 2. Why incrementPlayouts() and addWins(reward)?
 
-   incrementPlayouts() is used to record how many times this node has been visited (simulated).
+   incrementPlayouts() records how many times this node has been visited (simulated).
 
-   addWins(reward) accumulates the reward value and is used to subsequently calculate the win rate (such as wins/playouts) to evaluate the superiority or inferiority of this node.
+   addWins(reward) accumulates the reward value, which is used to calculate the UTC score  for evaluating the node's potential.
 
 ### Running Time
 
 We use System.nanoTime() to obtain the running times of the four stages.
 
-![](tictactoe_running_time.png)
+![](./images/tictactoe_running_time.png)
 
 #### operations results
 
@@ -139,7 +152,7 @@ We use System.nanoTime() to obtain the running times of the four stages.
 | 8    | 0.3        | 0.436      | 0.239        | 0.188        | 1.327     |
 | 9    | 0.19       | 0.221      | 0.244        | 0.196        | 1.031     |
 
-![](tictactoe_diagram.png)
+![](./images/tictactoe_diagram.png)
 
 Here are some observations and related consumption
 
@@ -356,15 +369,15 @@ The current player's turn (black side/white side) is displayed in real time at t
 
 The status bar is updated dynamically according to the game progress without user intervention.
 
-![](./start.png)
+![](./images/start.png)
 
-![](./win.png)
+![](./images/win.png)
 
 ### Othello Running Time
 
 We use System.currentTimeMillis() to obtain the running times of the four stages.
 
-![](othello_running_time.png)
+![](./images/othello_running_time.png)
 
 #### operations result
 
@@ -381,7 +394,7 @@ We use System.currentTimeMillis() to obtain the running times of the four stages
 | 9    | 19.09      | 178.816    | 837.087      | 1.914        | 1037.168  |
 | 10   | 22.874     | 221.08     | 914.892      | 3.382        | 1162.548  |
 
-![](othello_diagram.png)
+![](./images/othello_diagram.png)
 
 Here are some observations and related consumption
 
@@ -408,7 +421,6 @@ Instead of expanding all possible moves, we could implement a selective expansio
 1. Calculate a heuristic score for each potential move
 2. Sort moves based on their scores
 3. Only expand the top N moves (e.g., top 5 or 10)
-
 
 ## Reference
 
