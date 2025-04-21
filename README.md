@@ -6,6 +6,8 @@ Ao Li, NUID: 002349030
 
 Yuheng Li, NUID: 002087124
 
+video introduction: https://www.youtube.com/watch?v=LdhK66kpczI
+
 ---
 
 This is a maven project
