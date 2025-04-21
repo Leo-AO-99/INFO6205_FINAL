@@ -31,18 +31,10 @@ public class MCTS {
     private static PrintWriter csvWriter;
 
     public static void main(String[] args) {
+        // long seed = 1743396199967L;
         long seed = System.currentTimeMillis();
+        
         System.out.println("Seed: " + seed);
-
-        try {
-            csvWriter = new PrintWriter(new FileWriter("ttt_mcts_timing_log.csv"));
-            csvWriter.println("Step,SelectTime,ExpandTime,SimulateTime,BackpropTime,TotalTime");
-        } catch (IOException e) {
-            System.err.println("Failed to create CSV file.");
-            e.printStackTrace();
-            return;
-        }
-
         MCTS mcts = new MCTS(new TicTacToeNode(new TicTacToe(seed).new TicTacToeState()));
         Node<TicTacToe> root = mcts.root;
 
@@ -50,19 +42,7 @@ public class MCTS {
             root = nextNode(root);
             System.out.println(showBoard(root.state()));
         }
-
         System.out.println("Game over");
-
-        System.out.println("==== Final Timing Summary ====");
-        System.out.printf("Total Selection Time: %.3f ms%n", totalSelectTime / 1_000_000.0);
-        System.out.printf("Total Expansion Time: %.3f ms%n", totalExpandTime / 1_000_000.0);
-        System.out.printf("Total Simulation Time: %.3f ms%n", totalSimulateTime / 1_000_000.0);
-        System.out.printf("Total Backpropagation Time: %.3f ms%n", totalBackpropTime / 1_000_000.0);
-        System.out.printf("Total MCTS Time: %.3f ms%n", totalTime / 1_000_000.0);
-        System.out.println("================================");
-
-        csvWriter.close();
-        System.out.println("Timing data written to ttt_mcts_timing_log.csv");
         System.exit(0);
     }
 
